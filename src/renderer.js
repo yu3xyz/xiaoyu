@@ -22,6 +22,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const chat = new ChatEngine();
   await chat.loadConfig();
 
+  // Persist env-provided config so it survives restart
+  if (chat.config.apiKey && chat.config.apiEndpoint !== 'https://api.openai.com/v1') {
+    chat.saveConfig({
+      apiKey: chat.config.apiKey,
+      apiEndpoint: chat.config.apiEndpoint
+    });
+  }
+
   // Populate settings
   document.getElementById('sPetName').value = chat.config.petName || '小雨';
   document.getElementById('sApiKey').value = chat.config.apiKey || '';

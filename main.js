@@ -135,9 +135,11 @@ app.whenReady().then(() => {
 
   ipcMain.handle('get-config', () => {
     const cfg = loadConfig();
-    // Use env var as fallback if no saved key
     if (!cfg.apiKey && process.env.XIAOYU_API_KEY) {
       cfg.apiKey = process.env.XIAOYU_API_KEY;
+    }
+    if (process.env.XIAOYU_API_ENDPOINT) {
+      cfg.apiEndpoint = process.env.XIAOYU_API_ENDPOINT;
     }
     return cfg;
   });

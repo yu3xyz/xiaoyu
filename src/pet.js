@@ -1,4 +1,4 @@
-// === 小雨 - Pet Drawing & Animation Engine ===
+// === 小雨 Nekomimi - Cat Girl Pet Drawing & Animation Engine ===
 
 const PetState = {
   IDLE: 'idle',
@@ -23,35 +23,44 @@ class XiaoYu {
     this.breathOffset = 0;
     this.eyeDirection = { x: 0, y: 0 };
     this.targetEyeDir = { x: 0, y: 0 };
-    this.mood = 'neutral'; // neutral, happy, sad, angry, surprised
+    this.mood = 'neutral';
     this.emotionTimer = 0;
     this.cheekBlush = 0;
     this.petting = false;
     this.petCount = 0;
     this.tailWag = 0;
+    this.tailSway = 0;
 
-    // Character colors
+    // Cat-girl colors — warm calico/ginger theme
     this.colors = {
       skin: '#FDE8E0',
       skinShadow: '#F5D5C8',
-      hair: '#4A4A6A',
-      hairLight: '#6A6A8A',
-      eye: '#6A5ACD',
-      eyeLight: '#8B7BEF',
+      hair: '#E8905A',
+      hairLight: '#F0A870',
+      hairDark: '#D07840',
+      earInner: '#FFB0B8',
+      eye: '#E8A030',
+      eyeLight: '#F0C060',
       eyeShine: '#FFFFFF',
-      dress: '#F0B4C8',
-      dressDark: '#E09AB0',
-      dressLight: '#F8D0DC',
+      dress: '#FFF5EE',
+      dressDark: '#F0E0D0',
+      dressLight: '#FFFFFF',
       blush: 'rgba(255, 150, 150, 0.35)',
       mouth: '#E07080',
-      ribbon: '#FF6B8A',
-      ribbonDark: '#E05070',
+      collar: '#FF6B8A',
+      bell: '#FFD700',
+      bellShine: '#FFF0A0',
+      paw: '#FDE8E0',
+      pawPad: '#FFB0B8',
+      tail: '#E8905A',
+      tailLight: '#F0A870',
       sock: '#FFFFFF',
-      shoe: '#4A4A6A',
-      shoeShine: '#FFFFFF'
+      shoe: '#E8A030',
+      shoeShine: '#FFFFFF',
+      whisker: 'rgba(160, 140, 130, 0.4)'
     };
 
-    // Animation cycle: [state, duration_frames]
+    // Idle animation sequence
     this.idleSequence = [
       { type: 'look_left', duration: 60 },
       { type: 'look_right', duration: 60 },
@@ -63,6 +72,7 @@ class XiaoYu {
     this.sequenceTimer = 0;
     this.handPosition = 0; // 0 = down, 1 = wave, 2 = think
     this.bodyTilt = 0;
+    this.earTwitch = 0;
 
     this.init();
   }
@@ -75,9 +85,7 @@ class XiaoYu {
     if (this.state === newState) return;
     this.state = newState;
     this.stateTimer = 0;
-    if (newState === PetState.TALKING) {
-      this.talkFrame = 0;
-    }
+    if (newState === PetState.TALKING) this.talkFrame = 0;
     if (newState === PetState.BLINK) {
       this.isBlinking = true;
       this.blinkDuration = 6;
@@ -95,7 +103,7 @@ class XiaoYu {
     this.breathOffset = Math.sin(this.frame * 0.03) * 1.5;
     this.stateTimer++;
 
-    // Blink automatically
+    // Blink
     if (!this.isBlinking) {
       this.blinkTimer++;
       if (this.blinkTimer > 120 + Math.random() * 80) {
@@ -105,24 +113,28 @@ class XiaoYu {
       }
     } else {
       this.blinkDuration--;
-      if (this.blinkDuration <= 0) {
-        this.isBlinking = false;
-      }
+      if (this.blinkDuration <= 0) this.isBlinking = false;
     }
 
-    // Mood emotion timer
-    if (this.emotionTimer > 0) {
-      this.emotionTimer--;
-    } else {
-      this.mood = 'neutral';
-    }
+    // Mood timer
+    if (this.emotionTimer > 0) this.emotionTimer--;
+    else this.mood = 'neutral';
 
-    // Cheek blush fades
     this.cheekBlush *= 0.95;
 
     // Eye movement smoothing
     this.eyeDirection.x += (this.targetEyeDir.x - this.eyeDirection.x) * 0.05;
     this.eyeDirection.y += (this.targetEyeDir.y - this.eyeDirection.y) * 0.05;
+
+    // Tail animation
+    this.tailWag *= 0.92;
+    if (this.mood === 'happy' || this.petting) {
+      this.tailWag = Math.max(this.tailWag, 0.6);
+    }
+    this.tailSway = Math.sin(this.frame * 0.04) * 0.3;
+
+    // Ear twitch (random)
+    this.earTwitch = Math.sin(this.frame * 0.1) * (Math.random() > 0.98 ? 0.15 : 0.02);
 
     // Pet reaction
     if (this.petting) {
@@ -136,7 +148,7 @@ class XiaoYu {
       this.emotionTimer = 60;
     }
 
-    // Idle sequence - random eye movement
+    // Idle sequence
     if (this.state === PetState.IDLE || this.state === PetState.THINKING) {
       this.sequenceTimer++;
       const currentSeq = this.idleSequence[this.sequenceIndex];
@@ -146,39 +158,27 @@ class XiaoYu {
       }
       switch (currentSeq.type) {
         case 'look_left':
-          this.targetEyeDir.x = -0.4;
-          this.targetEyeDir.y = 0;
-          this.handPosition = 0;
-          this.bodyTilt *= 0.9;
+          this.targetEyeDir.x = -0.4; this.targetEyeDir.y = 0;
+          this.handPosition = 0; this.bodyTilt *= 0.9;
           break;
         case 'look_right':
-          this.targetEyeDir.x = 0.4;
-          this.targetEyeDir.y = 0;
-          this.handPosition = 0;
-          this.bodyTilt *= 0.9;
+          this.targetEyeDir.x = 0.4; this.targetEyeDir.y = 0;
+          this.handPosition = 0; this.bodyTilt *= 0.9;
           break;
         case 'look_center':
-          this.targetEyeDir.x *= 0.9;
-          this.targetEyeDir.y *= 0.9;
-          this.handPosition = 0;
-          this.bodyTilt *= 0.9;
+          this.targetEyeDir.x *= 0.9; this.targetEyeDir.y *= 0.9;
+          this.handPosition = 0; this.bodyTilt *= 0.9;
           break;
         case 'tilt':
-          this.targetEyeDir.x = 0;
-          this.targetEyeDir.y = 0;
-          this.bodyTilt = 0.05;
-          this.handPosition = 0;
+          this.targetEyeDir.x = 0; this.targetEyeDir.y = 0;
+          this.bodyTilt = 0.05; this.handPosition = 0;
           break;
         case 'think':
-          this.targetEyeDir.x = 0.2;
-          this.targetEyeDir.y = -0.3;
+          this.targetEyeDir.x = 0.2; this.targetEyeDir.y = -0.3;
           this.handPosition = 2;
           break;
       }
     }
-
-    // Tail wag decay
-    this.tailWag *= 0.9;
   }
 
   draw() {
@@ -188,78 +188,157 @@ class XiaoYu {
     ctx.clearRect(0, 0, w, h);
 
     ctx.save();
-    // Center the character
     ctx.translate(w / 2, h / 2 + 20);
-    ctx.scale(1, 1);
 
     const breathe = this.breathOffset;
     const tilt = this.bodyTilt;
 
     // === DRAW ORDER: back to front ===
-
-    // Hair back
+    this.drawTail(ctx, breathe);
     this.drawHairBack(ctx, breathe);
-
-    // Body (behind arms)
     this.drawBody(ctx, breathe);
-
-    // Left arm
     this.drawArm(ctx, 'left', breathe, tilt);
-
-    // Head
     this.drawHead(ctx, breathe, tilt);
-
-    // Face
+    this.drawCatEars(ctx, breathe, tilt);
     this.drawFace(ctx, breathe, tilt);
-
-    // Hair front
+    this.drawWhiskers(ctx, breathe, tilt);
     this.drawHairFront(ctx, breathe, tilt);
-
-    // Ribbon
-    this.drawRibbon(ctx, breathe, tilt);
-
-    // Right arm
     this.drawArm(ctx, 'right', breathe, tilt);
-
-    // Pet effect
-    if (this.petting) {
-      this.drawPetEffect(ctx);
-    }
+    if (this.petting) this.drawPetEffect(ctx);
 
     ctx.restore();
   }
+
+  // ==================== CAT EARS ====================
+
+  drawCatEars(ctx, breathe, tilt) {
+    ctx.save();
+    ctx.translate(0, -50 + breathe * 0.3 + tilt * 10);
+
+    const twitch = this.earTwitch;
+
+    // Left ear
+    ctx.beginPath();
+    ctx.moveTo(-26 + twitch * 5, -38);
+    ctx.lineTo(-34 + twitch * 5, -56);
+    ctx.lineTo(-14 + twitch * 5, -42);
+    ctx.closePath();
+    ctx.fillStyle = this.colors.hair;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(200, 120, 60, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Left inner ear
+    ctx.beginPath();
+    ctx.moveTo(-24 + twitch * 5, -40);
+    ctx.lineTo(-30 + twitch * 5, -52);
+    ctx.lineTo(-18 + twitch * 5, -43);
+    ctx.closePath();
+    ctx.fillStyle = this.colors.earInner;
+    ctx.fill();
+
+    // Right ear
+    ctx.beginPath();
+    ctx.moveTo(26 - twitch * 5, -38);
+    ctx.lineTo(34 - twitch * 5, -56);
+    ctx.lineTo(14 - twitch * 5, -42);
+    ctx.closePath();
+    ctx.fillStyle = this.colors.hair;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(200, 120, 60, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Right inner ear
+    ctx.beginPath();
+    ctx.moveTo(24 - twitch * 5, -40);
+    ctx.lineTo(30 - twitch * 5, -52);
+    ctx.lineTo(18 - twitch * 5, -43);
+    ctx.closePath();
+    ctx.fillStyle = this.colors.earInner;
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // ==================== TAIL ====================
+
+  drawTail(ctx, breathe) {
+    ctx.save();
+    ctx.translate(0, 20 + breathe);
+
+    const wag = this.tailWag;
+    const sway = this.tailSway;
+    const wagOffset = Math.sin(this.frame * 0.15) * wag * 20;
+
+    // Tail base position (behind the body, lower right)
+    const baseX = 20;
+    const baseY = 35;
+
+    // Draw tail curving out from behind
+    ctx.beginPath();
+    ctx.moveTo(baseX, baseY);
+
+    // Tail curve control points, affected by wag
+    const cp1x = baseX + 15 + wagOffset + sway * 10;
+    const cp1y = baseY - 5;
+    const cp2x = baseX + 25 + wagOffset * 1.3 + sway * 15;
+    const cp2y = baseY - 20;
+    const endX = baseX + 20 + wagOffset * 1.5 + sway * 20;
+    const endY = baseY - 30;
+
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
+    ctx.strokeStyle = this.colors.tail;
+    ctx.lineWidth = 14;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Tail lighter underside
+    ctx.beginPath();
+    ctx.moveTo(baseX, baseY);
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
+    ctx.strokeStyle = this.colors.tailLight;
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = 0.4;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Tail tip (white/fluffy)
+    ctx.beginPath();
+    ctx.arc(endX, endY - 2, 8, 0, Math.PI * 2);
+    ctx.fillStyle = this.colors.sock;
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // ==================== HEAD ====================
 
   drawHead(ctx, breathe, tilt) {
     ctx.save();
     ctx.translate(0, -50 + breathe * 0.3 + tilt * 10);
 
-    // Head shape
+    // Head shape (slightly rounder for cat-girl)
     ctx.beginPath();
-    ctx.ellipse(0, 0, 38, 42, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 2, 38, 42, 0, 0, Math.PI * 2);
     ctx.fillStyle = this.colors.skin;
     ctx.fill();
     ctx.strokeStyle = 'rgba(200, 160, 150, 0.3)';
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Ears
-    ctx.beginPath();
-    ctx.ellipse(-34, -5, 8, 10, -0.2, 0, Math.PI * 2);
-    ctx.fillStyle = this.colors.skin;
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(34, -5, 8, 10, 0.2, 0, Math.PI * 2);
-    ctx.fillStyle = this.colors.skin;
-    ctx.fill();
-
     ctx.restore();
   }
+
+  // ==================== HAIR ====================
 
   drawHairBack(ctx, breathe) {
     ctx.save();
     ctx.translate(0, -50 + breathe * 0.3);
 
-    // Back hair - flowing down
+    // Back hair
     ctx.beginPath();
     ctx.moveTo(-30, -30);
     ctx.quadraticCurveTo(-42, 0, -38, 30);
@@ -280,15 +359,15 @@ class XiaoYu {
     ctx.fillStyle = this.colors.hair;
     ctx.fill();
 
-    // Bangs - back layer
+    // Bangs back layer
     ctx.beginPath();
-    ctx.moveTo(-28, -32);
-    ctx.quadraticCurveTo(-20, -42, -10, -38);
-    ctx.quadraticCurveTo(0, -42, 10, -38);
-    ctx.quadraticCurveTo(20, -42, 28, -32);
+    ctx.moveTo(-30, -32);
+    ctx.quadraticCurveTo(-20, -44, -8, -39);
+    ctx.quadraticCurveTo(0, -44, 8, -39);
+    ctx.quadraticCurveTo(20, -44, 30, -32);
     ctx.quadraticCurveTo(25, -22, 15, -28);
     ctx.quadraticCurveTo(0, -34, -15, -28);
-    ctx.quadraticCurveTo(-25, -22, -28, -32);
+    ctx.quadraticCurveTo(-25, -22, -30, -32);
     ctx.closePath();
     ctx.fillStyle = this.colors.hair;
     ctx.fill();
@@ -300,58 +379,82 @@ class XiaoYu {
     ctx.save();
     ctx.translate(0, -50 + breathe * 0.3 + tilt * 10);
 
-    // Side hair - left
+    // Side hair
     ctx.beginPath();
-    ctx.moveTo(-32, -28);
-    ctx.quadraticCurveTo(-40, -10, -36, 20);
-    ctx.quadraticCurveTo(-34, 30, -28, 28);
-    ctx.quadraticCurveTo(-30, 10, -26, -15);
-    ctx.quadraticCurveTo(-24, -25, -32, -28);
+    ctx.moveTo(-32, -24);
+    ctx.quadraticCurveTo(-40, -5, -36, 22);
+    ctx.quadraticCurveTo(-34, 32, -28, 30);
+    ctx.quadraticCurveTo(-30, 12, -26, -12);
+    ctx.quadraticCurveTo(-24, -22, -32, -24);
     ctx.closePath();
     ctx.fillStyle = this.colors.hair;
     ctx.fill();
 
-    // Side hair - right
     ctx.beginPath();
-    ctx.moveTo(32, -28);
-    ctx.quadraticCurveTo(40, -10, 36, 20);
-    ctx.quadraticCurveTo(34, 30, 28, 28);
-    ctx.quadraticCurveTo(30, 10, 26, -15);
-    ctx.quadraticCurveTo(24, -25, 32, -28);
+    ctx.moveTo(32, -24);
+    ctx.quadraticCurveTo(40, -5, 36, 22);
+    ctx.quadraticCurveTo(34, 32, 28, 30);
+    ctx.quadraticCurveTo(30, 12, 26, -12);
+    ctx.quadraticCurveTo(24, -22, 32, -24);
     ctx.closePath();
     ctx.fillStyle = this.colors.hair;
     ctx.fill();
 
-    // Bangs - front layer (asymmetrical)
+    // Bangs front layer — cat-girl style with V-cut in middle
     ctx.beginPath();
-    ctx.moveTo(-30, -34);
-    ctx.quadraticCurveTo(-24, -42, -14, -38);
-    ctx.quadraticCurveTo(-6, -42, 2, -37);
-    ctx.quadraticCurveTo(10, -42, 20, -36);
-    ctx.quadraticCurveTo(28, -32, 26, -26);
-    ctx.quadraticCurveTo(18, -24, 8, -30);
-    ctx.quadraticCurveTo(0, -26, -8, -30);
-    ctx.quadraticCurveTo(-18, -24, -26, -28);
-    ctx.quadraticCurveTo(-32, -30, -30, -34);
+    ctx.moveTo(-32, -34);
+    ctx.quadraticCurveTo(-26, -44, -16, -38);
+    ctx.quadraticCurveTo(-10, -42, -4, -36);
+    ctx.quadraticCurveTo(0, -44, 4, -36);
+    ctx.quadraticCurveTo(10, -42, 16, -38);
+    ctx.quadraticCurveTo(26, -44, 32, -34);
+    ctx.quadraticCurveTo(28, -28, 20, -30);
+    ctx.quadraticCurveTo(12, -26, 6, -32);
+    ctx.quadraticCurveTo(0, -28, -6, -32);
+    ctx.quadraticCurveTo(-12, -26, -20, -30);
+    ctx.quadraticCurveTo(-28, -28, -32, -34);
     ctx.closePath();
     ctx.fillStyle = this.colors.hair;
     ctx.fill();
 
     // Hair highlights
     ctx.beginPath();
-    ctx.moveTo(-12, -38);
-    ctx.quadraticCurveTo(-6, -40, 0, -36);
-    ctx.quadraticCurveTo(6, -38, 12, -34);
-    ctx.quadraticCurveTo(6, -32, 0, -34);
-    ctx.quadraticCurveTo(-6, -32, -12, -38);
+    ctx.moveTo(-14, -38);
+    ctx.quadraticCurveTo(-8, -42, 0, -37);
+    ctx.quadraticCurveTo(8, -42, 14, -38);
+    ctx.quadraticCurveTo(8, -34, 0, -36);
+    ctx.quadraticCurveTo(-8, -34, -14, -38);
     ctx.closePath();
     ctx.fillStyle = this.colors.hairLight;
-    ctx.globalAlpha = 0.4;
+    ctx.globalAlpha = 0.35;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Streaks/different colored hair tufts (calico)
+    ctx.beginPath();
+    ctx.moveTo(-28, -30);
+    ctx.quadraticCurveTo(-22, -36, -18, -32);
+    ctx.quadraticCurveTo(-22, -28, -28, -30);
+    ctx.closePath();
+    ctx.fillStyle = this.colors.hairDark;
+    ctx.globalAlpha = 0.3;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.beginPath();
+    ctx.moveTo(22, -32);
+    ctx.quadraticCurveTo(26, -38, 30, -32);
+    ctx.quadraticCurveTo(26, -28, 22, -32);
+    ctx.closePath();
+    ctx.fillStyle = this.colors.hairDark;
+    ctx.globalAlpha = 0.3;
     ctx.fill();
     ctx.globalAlpha = 1;
 
     ctx.restore();
   }
+
+  // ==================== FACE ====================
 
   drawFace(ctx, breathe, tilt) {
     ctx.save();
@@ -366,97 +469,102 @@ class XiaoYu {
     const lookY = this.eyeDirection.y;
 
     if (this.isBlinking && this.blinkDuration > 2) {
-      // Closed eyes (blink) - draw eyelashes
+      // Closed eyes
       ctx.strokeStyle = this.colors.hair;
       ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(-eyeSpacing - eyeW + 2, eyeY);
+      ctx.beginPath(); ctx.moveTo(-eyeSpacing - eyeW + 2, eyeY);
       ctx.quadraticCurveTo(-eyeSpacing, eyeY - 2, -eyeSpacing + eyeW - 2, eyeY);
       ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(eyeSpacing - eyeW + 2, eyeY);
+      ctx.beginPath(); ctx.moveTo(eyeSpacing - eyeW + 2, eyeY);
       ctx.quadraticCurveTo(eyeSpacing, eyeY - 2, eyeSpacing + eyeW - 2, eyeY);
       ctx.stroke();
     } else if (this.mood === 'happy' && this.emotionTimer > 30) {
-      // Happy - crescent eyes
+      // Happy crescent eyes
       ctx.strokeStyle = this.colors.hair;
       ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(-eyeSpacing, eyeY, eyeW * 0.7, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.beginPath(); ctx.arc(-eyeSpacing, eyeY, eyeW * 0.7, Math.PI * 0.1, Math.PI * 0.9);
       ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(eyeSpacing, eyeY, eyeW * 0.7, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.beginPath(); ctx.arc(eyeSpacing, eyeY, eyeW * 0.7, Math.PI * 0.1, Math.PI * 0.9);
       ctx.stroke();
     } else {
-      // Normal eyes
+      // Cat-style eyes (slightly almond-shaped)
       const leftEyeX = -eyeSpacing;
       const rightEyeX = eyeSpacing;
 
       // Eye whites
       ctx.beginPath();
-      ctx.ellipse(leftEyeX, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2);
+      ctx.ellipse(leftEyeX, eyeY, eyeW, eyeH, -0.05, 0, Math.PI * 2);
       ctx.fillStyle = '#FFFFFF';
       ctx.fill();
       ctx.beginPath();
-      ctx.ellipse(rightEyeX, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2);
+      ctx.ellipse(rightEyeX, eyeY, eyeW, eyeH, 0.05, 0, Math.PI * 2);
       ctx.fillStyle = '#FFFFFF';
       ctx.fill();
 
-      // Iris
-      const irisR = 7;
+      // Iris (slightly larger, cat-like)
+      const irisR = 7.5;
       const irisOffsetX = lookX * 3;
       const irisOffsetY = lookY * 2;
 
       ctx.beginPath();
-      ctx.ellipse(leftEyeX + irisOffsetX, eyeY + irisOffsetY, irisR, irisR, 0, 0, Math.PI * 2);
+      ctx.ellipse(leftEyeX + irisOffsetX, eyeY + irisOffsetY, irisR, irisR * 1.1, 0, 0, Math.PI * 2);
       ctx.fillStyle = this.colors.eye;
       ctx.fill();
       ctx.beginPath();
-      ctx.ellipse(rightEyeX + irisOffsetX, eyeY + irisOffsetY, irisR, irisR, 0, 0, Math.PI * 2);
+      ctx.ellipse(rightEyeX + irisOffsetX, eyeY + irisOffsetY, irisR, irisR * 1.1, 0, 0, Math.PI * 2);
       ctx.fillStyle = this.colors.eye;
       ctx.fill();
 
-      // Iris highlight
-      const irisInnerR = 4;
+      // Inner iris glow
       ctx.beginPath();
-      ctx.ellipse(leftEyeX + irisOffsetX, eyeY + irisOffsetY, irisInnerR, irisInnerR, 0, 0, Math.PI * 2);
+      ctx.ellipse(leftEyeX + irisOffsetX + 1, eyeY + irisOffsetY, 4, 5, 0, 0, Math.PI * 2);
       ctx.fillStyle = this.colors.eyeLight;
       ctx.fill();
       ctx.beginPath();
-      ctx.ellipse(rightEyeX + irisOffsetX, eyeY + irisOffsetY, irisInnerR, irisInnerR, 0, 0, Math.PI * 2);
+      ctx.ellipse(rightEyeX + irisOffsetX + 1, eyeY + irisOffsetY, 4, 5, 0, 0, Math.PI * 2);
       ctx.fillStyle = this.colors.eyeLight;
       ctx.fill();
 
-      // Eye shine
+      // Cat-like pupil (vertical slit hint — just a dark vertical ellipse)
       ctx.beginPath();
-      ctx.arc(leftEyeX + irisOffsetX + 3, eyeY + irisOffsetY - 3, 2.5, 0, Math.PI * 2);
+      ctx.ellipse(leftEyeX + irisOffsetX, eyeY + irisOffsetY, 2.5, 5, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#1A1A2E';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(rightEyeX + irisOffsetX, eyeY + irisOffsetY, 2.5, 5, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#1A1A2E';
+      ctx.fill();
+
+      // Eye shine (big highlight)
+      ctx.beginPath();
+      ctx.arc(leftEyeX + irisOffsetX + 3.5, eyeY + irisOffsetY - 3, 3, 0, Math.PI * 2);
       ctx.fillStyle = this.colors.eyeShine;
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(rightEyeX + irisOffsetX + 3, eyeY + irisOffsetY - 3, 2.5, 0, Math.PI * 2);
+      ctx.arc(rightEyeX + irisOffsetX + 3.5, eyeY + irisOffsetY - 3, 3, 0, Math.PI * 2);
       ctx.fillStyle = this.colors.eyeShine;
       ctx.fill();
 
       // Small secondary shine
       ctx.beginPath();
-      ctx.arc(leftEyeX + irisOffsetX - 2, eyeY + irisOffsetY + 2, 1.3, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.arc(leftEyeX + irisOffsetX - 2.5, eyeY + irisOffsetY + 2.5, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(rightEyeX + irisOffsetX - 2, eyeY + irisOffsetY + 2, 1.3, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.arc(rightEyeX + irisOffsetX - 2.5, eyeY + irisOffsetY + 2.5, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
       ctx.fill();
 
-      // Upper eyelid shadow
+      // Upper eyelid
       ctx.beginPath();
       ctx.moveTo(leftEyeX - eyeW, eyeY - 5);
-      ctx.quadraticCurveTo(leftEyeX, eyeY - 8, leftEyeX + eyeW, eyeY - 5);
+      ctx.quadraticCurveTo(leftEyeX, eyeY - 9, leftEyeX + eyeW, eyeY - 5);
       ctx.strokeStyle = this.colors.hair;
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.beginPath();
       ctx.moveTo(rightEyeX - eyeW, eyeY - 5);
-      ctx.quadraticCurveTo(rightEyeX, eyeY - 8, rightEyeX + eyeW, eyeY - 5);
+      ctx.quadraticCurveTo(rightEyeX, eyeY - 9, rightEyeX + eyeW, eyeY - 5);
       ctx.strokeStyle = this.colors.hair;
       ctx.lineWidth = 2;
       ctx.stroke();
@@ -474,6 +582,20 @@ class XiaoYu {
           ctx.stroke();
         }
       }
+
+      // Lower eyelash (subtle cat-eye)
+      ctx.beginPath();
+      ctx.moveTo(leftEyeX - eyeW + 2, eyeY + 6);
+      ctx.quadraticCurveTo(leftEyeX, eyeY + 9, leftEyeX + eyeW - 2, eyeY + 6);
+      ctx.strokeStyle = 'rgba(200, 160, 150, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(rightEyeX - eyeW + 2, eyeY + 6);
+      ctx.quadraticCurveTo(rightEyeX, eyeY + 9, rightEyeX + eyeW - 2, eyeY + 6);
+      ctx.strokeStyle = 'rgba(200, 160, 150, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
 
     // === EYEBROWS ===
@@ -508,13 +630,11 @@ class XiaoYu {
     const mouthY = 12;
 
     if (this.state === PetState.TALKING) {
-      // Open mouth (talking)
       const openAmount = 3 + Math.sin(this.frame * 0.4) * 2;
       ctx.beginPath();
       ctx.ellipse(0, mouthY + 2, 5, openAmount, 0, 0, Math.PI * 2);
       ctx.fillStyle = this.colors.mouth;
       ctx.fill();
-      // Tongue
       if (openAmount > 3) {
         ctx.beginPath();
         ctx.ellipse(0, mouthY + 2 + openAmount * 0.4, 3, 2.5, 0, 0, Math.PI);
@@ -522,20 +642,17 @@ class XiaoYu {
         ctx.fill();
       }
     } else if (this.mood === 'happy') {
-      // Big smile
       ctx.beginPath();
       ctx.arc(0, mouthY, 6, 0.1, Math.PI - 0.1);
       ctx.strokeStyle = this.colors.mouth;
       ctx.lineWidth = 2;
       ctx.stroke();
     } else if (this.mood === 'surprised') {
-      // Small O mouth
       ctx.beginPath();
-      ctx.ellipse(0, mouthY, 4, 5, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, mouthY, 3, 4, 0, 0, Math.PI * 2);
       ctx.fillStyle = this.colors.mouth;
       ctx.fill();
     } else {
-      // Default smile
       ctx.beginPath();
       ctx.arc(0, mouthY, 4, 0.2, Math.PI - 0.2);
       ctx.strokeStyle = this.colors.mouth;
@@ -545,6 +662,38 @@ class XiaoYu {
 
     ctx.restore();
   }
+
+  // ==================== WHISKERS ====================
+
+  drawWhiskers(ctx, breathe, tilt) {
+    ctx.save();
+    ctx.translate(0, -50 + breathe * 0.3 + tilt * 10);
+
+    const baseY = 4;
+    const color = this.colors.whisker;
+
+    // Left whiskers
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-22, baseY + i * 4);
+      ctx.lineTo(-42, baseY + i * 5 - 3);
+      ctx.stroke();
+    }
+
+    // Right whiskers
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.moveTo(22, baseY + i * 4);
+      ctx.lineTo(42, baseY + i * 5 - 3);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  // ==================== BODY ====================
 
   drawBody(ctx, breathe) {
     ctx.save();
@@ -556,7 +705,7 @@ class XiaoYu {
     ctx.fillStyle = this.colors.skin;
     ctx.fill();
 
-    // Torso - dress
+    // Torso - dress (cream/white cat-girl dress)
     ctx.beginPath();
     ctx.moveTo(-28, -28);
     ctx.quadraticCurveTo(-30, -10, -32, 10);
@@ -568,7 +717,7 @@ class XiaoYu {
     ctx.closePath();
     ctx.fillStyle = this.colors.dress;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(200, 150, 160, 0.3)';
+    ctx.strokeStyle = 'rgba(200, 180, 170, 0.3)';
     ctx.lineWidth = 0.5;
     ctx.stroke();
 
@@ -583,7 +732,7 @@ class XiaoYu {
     ctx.closePath();
     ctx.fillStyle = this.colors.dress;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(200, 150, 160, 0.3)';
+    ctx.strokeStyle = 'rgba(200, 180, 170, 0.3)';
     ctx.lineWidth = 0.5;
     ctx.stroke();
 
@@ -599,35 +748,44 @@ class XiaoYu {
     ctx.fillStyle = this.colors.dressLight;
     ctx.fill();
 
-    // Collar
+    // === CAT COLLAR ===
     ctx.beginPath();
-    ctx.moveTo(-8, -28);
-    ctx.quadraticCurveTo(0, -22, 8, -28);
-    ctx.quadraticCurveTo(0, -24, -8, -28);
+    ctx.moveTo(-12, -30);
+    ctx.quadraticCurveTo(-8, -26, -4, -30);
+    ctx.lineTo(4, -30);
+    ctx.quadraticCurveTo(8, -26, 12, -30);
+    ctx.quadraticCurveTo(8, -24, 4, -28);
+    ctx.lineTo(-4, -28);
+    ctx.quadraticCurveTo(-8, -24, -12, -30);
     ctx.closePath();
-    ctx.fillStyle = this.colors.dressDark;
+    ctx.fillStyle = this.colors.collar;
     ctx.fill();
 
-    // Dress ribbon/bow
+    // Collar tag / bell
     ctx.beginPath();
-    ctx.ellipse(0, 0, 6, 4, 0, 0, Math.PI * 2);
-    ctx.fillStyle = this.colors.ribbon;
+    ctx.arc(0, -22, 5, 0, Math.PI * 2);
+    ctx.fillStyle = this.colors.bell;
+    ctx.fill();
+    ctx.strokeStyle = '#D4A000';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Bell highlight
+    ctx.beginPath();
+    ctx.arc(-1.5, -24, 2, 0, Math.PI * 2);
+    ctx.fillStyle = this.colors.bellShine;
     ctx.fill();
 
-    // Ribbon tails
+    // Bell slit
     ctx.beginPath();
-    ctx.moveTo(-3, 2);
-    ctx.quadraticCurveTo(-8, 10, -6, 14);
-    ctx.quadraticCurveTo(-4, 10, -2, 4);
-    ctx.closePath();
-    ctx.fillStyle = this.colors.ribbon;
+    ctx.ellipse(0, -21, 1.5, 0.8, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#B8860B';
     ctx.fill();
+
+    // Bell ringer
     ctx.beginPath();
-    ctx.moveTo(3, 2);
-    ctx.quadraticCurveTo(8, 10, 6, 14);
-    ctx.quadraticCurveTo(4, 10, 2, 4);
-    ctx.closePath();
-    ctx.fillStyle = this.colors.ribbon;
+    ctx.arc(0, -19.5, 1.3, 0, Math.PI * 2);
+    ctx.fillStyle = '#D4A000';
     ctx.fill();
 
     // Skirt
@@ -652,7 +810,7 @@ class XiaoYu {
       if (i === 0) ctx.moveTo(ax, ay);
       else ctx.lineTo(ax, ay);
     }
-    ctx.strokeStyle = this.colors.dressLight;
+    ctx.strokeStyle = this.colors.dressDark;
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
@@ -678,24 +836,22 @@ class XiaoYu {
 
     // Socks
     ctx.beginPath();
-    ctx.moveTo(-14, 46);
-    ctx.lineTo(-14, 50);
-    ctx.lineTo(-4, 50);
-    ctx.lineTo(-4, 46);
+    ctx.moveTo(-14, 46); ctx.lineTo(-14, 50);
+    ctx.lineTo(-4, 50); ctx.lineTo(-4, 46);
     ctx.closePath();
     ctx.fillStyle = this.colors.sock;
     ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(4, 46);
-    ctx.lineTo(4, 50);
-    ctx.lineTo(14, 50);
-    ctx.lineTo(14, 46);
+    ctx.moveTo(4, 46); ctx.lineTo(4, 50);
+    ctx.lineTo(14, 50); ctx.lineTo(14, 46);
     ctx.closePath();
     ctx.fillStyle = this.colors.sock;
     ctx.fill();
 
     ctx.restore();
   }
+
+  // ==================== ARMS & PAWS ====================
 
   drawArm(ctx, side, breathe, tilt) {
     ctx.save();
@@ -705,7 +861,6 @@ class XiaoYu {
     const shoulderX = dir * 28;
     const shoulderY = -18;
 
-    // Arm wave animation
     let armAngle = 0.3;
     if (this.handPosition === 1) {
       armAngle = -0.8 + Math.sin(this.frame * 0.08) * 0.2;
@@ -725,55 +880,45 @@ class XiaoYu {
     ctx.fillStyle = this.colors.skin;
     ctx.fill();
 
-    // Hand
-    ctx.beginPath();
-    ctx.arc(0, 24, 6, 0, Math.PI * 2);
-    ctx.fillStyle = this.colors.skin;
-    ctx.fill();
-
     // Sleeve
     ctx.beginPath();
     ctx.ellipse(0, 4, 9, 8, 0, 0, Math.PI * 2);
     ctx.fillStyle = this.colors.dress;
     ctx.fill();
 
+    // Paw hand (rounder, cat-like)
+    ctx.beginPath();
+    ctx.arc(0, 24, 7, 0, Math.PI * 2);
+    ctx.fillStyle = this.colors.paw;
+    ctx.fill();
+
+    // Paw pads
+    ctx.beginPath();
+    ctx.ellipse(0, 26, 3, 2, 0, 0, Math.PI * 2);
+    ctx.fillStyle = this.colors.pawPad;
+    ctx.globalAlpha = 0.5;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Toe beans
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.arc(i * 3.5, 22, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = this.colors.pawPad;
+      ctx.globalAlpha = 0.4;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
     ctx.restore();
   }
 
-  drawRibbon(ctx, breathe, tilt) {
-    ctx.save();
-    ctx.translate(0, -50 + breathe * 0.3 + tilt * 10);
-
-    // Hair ribbon on top
-    ctx.beginPath();
-    ctx.moveTo(-5, -40);
-    ctx.quadraticCurveTo(-18, -48, -20, -38);
-    ctx.quadraticCurveTo(-18, -34, -5, -38);
-    ctx.closePath();
-    ctx.fillStyle = this.colors.ribbon;
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(5, -40);
-    ctx.quadraticCurveTo(18, -48, 20, -38);
-    ctx.quadraticCurveTo(18, -34, 5, -38);
-    ctx.closePath();
-    ctx.fillStyle = this.colors.ribbon;
-    ctx.fill();
-
-    // Center knot
-    ctx.beginPath();
-    ctx.ellipse(0, -39, 4, 3, 0, 0, Math.PI * 2);
-    ctx.fillStyle = this.colors.ribbonDark;
-    ctx.fill();
-
-    ctx.restore();
-  }
+  // ==================== PET EFFECT ====================
 
   drawPetEffect(ctx) {
     ctx.save();
 
-    // Hearts floating up
+    // Paws and hearts when petted
     const heartCount = 3;
     for (let i = 0; i < heartCount; i++) {
       const phase = (this.frame + i * 20) % 40;
@@ -808,20 +953,16 @@ class XiaoYu {
     ctx.fill();
   }
 
+  // ==================== PUBLIC API ====================
+
   setMood(mood) {
     this.mood = mood;
     this.emotionTimer = 80;
-    if (mood === 'happy') {
-      this.cheekBlush = 0.9;
-    }
+    if (mood === 'happy') this.cheekBlush = 0.9;
   }
 
   setTalking(talking) {
-    if (talking) {
-      this.setState(PetState.TALKING);
-    } else {
-      this.setState(PetState.IDLE);
-    }
+    this.setState(talking ? PetState.TALKING : PetState.IDLE);
   }
 
   startPet() {
@@ -830,12 +971,11 @@ class XiaoYu {
     this.mood = 'happy';
     this.cheekBlush = 0.9;
     this.emotionTimer = 80;
+    this.tailWag = 1;
   }
 
   wave() {
     this.handPosition = 1;
-    setTimeout(() => {
-      this.handPosition = 0;
-    }, 2000);
+    setTimeout(() => { this.handPosition = 0; }, 2000);
   }
 }

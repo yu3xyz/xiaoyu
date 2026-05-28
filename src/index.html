@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>小雨 - 桌面宠物</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="petCanvas" width="260" height="280"></canvas>
+
+    <div id="chatBubble" class="hidden">
+      <div id="chatText"></div>
+      <div id="chatIndicator"><span></span><span></span><span></span></div>
+    </div>
+
+    <div id="inputArea">
+      <input type="text" id="chatInput" placeholder="和小雨说说话..." maxlength="500">
+      <button id="sendBtn">↵</button>
+    </div>
+
+    <div id="toolbar">
+      <button id="settingsBtn" title="设置">⚙</button>
+      <button id="petBtn" title="摸头">🖐</button>
+      <button id="feedBtn" title="喂食">🍭</button>
+    </div>
+  </div>
+
+  <div id="settingsPanel" class="hidden">
+    <div class="settings-header">
+      <h3>设置</h3>
+      <button id="closeSettings">✕</button>
+    </div>
+    <div class="settings-body">
+      <label>
+        宠物名字
+        <input type="text" id="sPetName" placeholder="小雨">
+      </label>
+      <label>
+        API Key
+        <input type="password" id="sApiKey" placeholder="sk-..." autocomplete="off">
+      </label>
+      <label>
+        API 地址
+        <input type="text" id="sApiEndpoint" placeholder="https://api.openai.com/v1">
+      </label>
+      <label>
+        模型
+        <input type="text" id="sModel" placeholder="gpt-4o-mini">
+      </label>
+      <label>
+        <button id="saveSettings">保存</button>
+      </label>
+      <div id="settingsStatus"></div>
+    </div>
+  </div>
+
+  <script src="pet.js"></script>
+  <script src="chat.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

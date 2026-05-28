@@ -59,7 +59,8 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
-      contextIsolation: true
+      contextIsolation: true,
+      webSecurity: false
     }
   });
 
@@ -140,6 +141,9 @@ app.whenReady().then(() => {
     }
     if (process.env.XIAOYU_API_ENDPOINT) {
       cfg.apiEndpoint = process.env.XIAOYU_API_ENDPOINT;
+    }
+    if (process.env.XIAOYU_MODEL) {
+      cfg.model = process.env.XIAOYU_MODEL;
     }
     return cfg;
   });

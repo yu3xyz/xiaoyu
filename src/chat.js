@@ -84,11 +84,20 @@ class ChatEngine {
     } catch (error) {
       console.error('Chat API error:', error);
       let errorMsg = '唔...好像出了点小问题，主人再试试好不好？';
+      const msg = error.message.toLowerCase();
 
-      if (error.message.includes('401') || error.message.includes('unauthorized')) {
+      if (msg.includes('401') || msg.includes('unauthorized') || msg.includes('auth')) {
         errorMsg = 'API Key 好像不对呢，主人检查一下设置吧~';
-      } else if (error.message.includes('timeout') || error.message.includes('time-out')) {
+      } else if (msg.includes('timeout') || msg.includes('time-out') || msg.includes('etimedout')) {
         errorMsg = '等了好久没等到回复...主人再问一次好不好？(｡•́︿•̀｡)';
+      } else if (msg.includes('failed to fetch') || msg.includes('networking') || msg.includes('network')) {
+        errorMsg = '网络连接失败了...主人检查一下网络或者 API 地址对不对吧 (｡•́︿•̀｡)';
+      } else if (msg.includes('400') || msg.includes('model')) {
+        errorMsg = '模型名称好像不对呢，主人去设置里检查一下吧~';
+      } else if (msg.includes('402') || msg.includes('insufficient') || msg.includes('quota') || msg.includes('balance')) {
+        errorMsg = 'API 余额不足啦，主人去充值一下吧 (´;ω;｀)';
+      } else if (msg.includes('404')) {
+        errorMsg = 'API 地址不对呢，主人检查一下设置里的地址吧~';
       }
 
       if (this.onError) this.onError(errorMsg);

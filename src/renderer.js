@@ -24,10 +24,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Persist env-provided config so it survives restart
   if (chat.config.apiKey && chat.config.apiEndpoint !== 'https://api.openai.com/v1') {
-    chat.saveConfig({
+    const save = {
       apiKey: chat.config.apiKey,
       apiEndpoint: chat.config.apiEndpoint
-    });
+    };
+    // Auto-detect model if endpoint is DeepSeek
+    if (chat.config.apiEndpoint.includes('deepseek') && chat.config.model === 'gpt-4o-mini') {
+      save.model = 'deepseek-chat';
+    }
+    await chat.saveConfig(save);
   }
 
   // Populate settings

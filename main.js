@@ -48,8 +48,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     x: pos.x,
     y: pos.y,
-    width: 280,
-    height: 380,
+    width: 300,
+    height: 450,
     transparent: true,
     frame: false,
     resizable: false,
@@ -61,6 +61,18 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true
     }
+  });
+
+  // Write debug log
+  const logStream = fs.createWriteStream(path.join(app.getPath('userData'), 'debug.log'), { flags: 'a' });
+  logStream.write(`[${new Date().toISOString()}] App started\n`);
+
+  mainWindow.webContents.on('console-message', (event, level, message) => {
+    logStream.write(`[${new Date().toISOString()}] [${level}] ${message}\n`);
+  });
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    logStream.write(`[${new Date().toISOString()}] Page loaded\n`);
   });
 
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
@@ -128,10 +140,20 @@ function createTray() {
 }
 
 app.whenReady().then(() => {
+  app.commandLine.appendSwitch('enable-transparent-visuals');
+  app.commandLine.appendSwitch('disable-gpu');
+
   createWindow();
   createTray();
 
-  ipcMain.handle('get-config', () => loadConfig());
+  ipcMain.handle('get-config', () => {
+    const cfg = loadConfig();
+    // Use env var as fallback if no saved key
+    if (!cfg.apiKey && process.env.XIAOYU_API_KEY) {
+      cfg.apiKey = process.env.XIAOYU_API_KEY;
+    }
+    return cfg;
+  });
   ipcMain.handle('save-config', (event, config) => {
     saveConfig(config);
     return true;
